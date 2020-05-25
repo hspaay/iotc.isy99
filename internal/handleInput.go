@@ -29,10 +29,13 @@ func (app *IsyApp) SwitchOnOff(input *iotc.InputDiscoveryMessage, onOffString st
 	if onOffString == "0" || strings.ToLower(onOffString) == "off" || strings.ToLower(onOffString) == "false" {
 		newValue = false
 	}
-	oldValue := app.pub.OutputValues.GetOutputValueByAddress(input.Address)
+	prevValue := "n/a"
+	prevOutputValue := app.pub.OutputValues.GetOutputValueByAddress(input.Address)
+	if prevOutputValue != nil {
+		prevValue = prevOutputValue.Value
+	}
 
-	app.logger.Infof("IsyApp.SwitchOnOff: Address %s. Old value=%s, New value=%v",
-		input.Address, oldValue.Value, newValue)
+	app.logger.Infof("IsyApp.SwitchOnOff: Address %s. Previous value=%s, New value=%v", input.Address, prevValue, newValue)
 
 	// input.UpdateValue(onOffString)
 	node := app.pub.Nodes.GetNodeByAddress(input.Address)
@@ -43,9 +46,10 @@ func (app *IsyApp) SwitchOnOff(input *iotc.InputDiscoveryMessage, onOffString st
 	return err
 }
 
-// InputHandler for handling input commands
+// HandleInputCommand for handling input commands
 // Currently very basic. Only switches are supported.
-func (app *IsyApp) InputHandler(input *iotc.InputDiscoveryMessage, s *iotc.SetInputMessage) {
+func (app *IsyApp) HandleInputCommand(input *iotc.InputDiscoveryMessage, s *iotc.SetInputMessage) {
+	app.logger.Infof("IsyApp.InputHandler. Input for '%s'", input.Address)
 
 	// payloadStr := string(payload[:])
 

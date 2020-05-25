@@ -33,28 +33,8 @@ type IsyApp struct {
 	isyAPI *IsyAPI // ISY gateway access
 }
 
-// // LoadConfiguration loads config for the adapter
-// func (adapter *Isy99App) LoadConfiguration(configFolder string) error {
-// 	err := adapter.MyZoneService.Load("isy99", configFolder, true)
-
-// 	// ensure device is setup correctly after loading configuration
-// 	if err == nil {
-// 		adapter.PublisherNode().SetConfigDefault(nodes.AttrNamePollInterval, ConfigDefaultPollIntervalSec, nodes.DataTypeInt, "Interval in seconds to scan for new nodes")
-
-// 		gateway := adapter.GatewayNode()
-// 		// Set default data type and description of gateway parameters
-// 		gateway.SetConfigDefault(nodes.AttrNameAddress, "", nodes.DataTypeString, "Hostname or IP address of the ISY gateway")
-// 		config := gateway.SetConfigDefault(nodes.AttrNameLoginName, "", nodes.DataTypeString, "Secret login name of the ISY gateway")
-// 		config.Secret = true
-// 		config = gateway.SetConfigDefault(nodes.AttrNamePassword, "", nodes.DataTypeString, "Secret password of the ISY gateway")
-// 		config.Secret = true
-// 		adapter.isyAPI.log = adapter.Logger()
-// 	}
-// 	return err
-// }
-
 // // Start the module.
-// // This loads the configuration and start polling and publishing sensor data in the background
+// // This starts the publisher and creates the gateway node
 // func (adapter *Isy99App) Start() error {
 // 	interval, _ := adapter.PublisherNode().GetConfigInt(nodes.AttrNamePollInterval)
 // 	err := adapter.MyZoneService.Start(adapter.commandHandler, nil, adapter.Poll, interval)
@@ -85,6 +65,12 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 	}
 	app.config.PublisherID = appID
 	app.isyAPI.log = pub.Logger
+	pub.SetPollInterval(60, app.Poll)
+	pub.SetNodeInputHandler(app.HandleInputCommand)
+	pub.SetNodeConfigHandler(app.HandleConfigCommand)
+	// // Discover the node(s) and outputs. Use default for republishing discovery
+	// isyPub.SetDiscoveryInterval(0, app.Discover)
+
 	return &app
 }
 
@@ -95,13 +81,6 @@ func Run() {
 
 	app := NewIsyApp(appConfig, isyPub)
 	app.SetupGatewayNode(isyPub)
-
-	isyPub.SetPollInterval(60, app.Poll)
-	isyPub.SetNodeInputHandler(app.InputHandler)
-	// isyPub.SetNodeConfigHandler(app.ConfigHandler)
-
-	// // Discover the node(s) and outputs. Use default for republishing discovery
-	// isyPub.SetDiscoveryInterval(0, app.Discover)
 
 	isyPub.Start()
 	isyPub.WaitForSignal()

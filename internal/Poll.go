@@ -3,6 +3,7 @@ package internal
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/publisher"
@@ -25,11 +26,12 @@ func (app *IsyApp) readIsyNodesValues(address string) (*IsyNodes, error) {
 	return &isyNodes, nil
 }
 
-// updateDevice updates the Iotc node from the provided isy node
+// updateDevice updates the node discovery and output value from the provided isy node
 func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	nodeID := isyNode.Address
 	pub := app.pub
 	hasInput := false
+	outputValue := isyNode.Property.Value
 
 	// What node are we dealing with?
 	deviceType := iotc.NodeTypeUnknown
@@ -39,6 +41,11 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		deviceType = iotc.NodeTypeOnOffSwitch
 		outputType = iotc.OutputTypeOnOffSwitch
 		hasInput = true
+		if outputValue == "0" || strings.ToLower(outputValue) == "false" {
+			outputValue = "false"
+		} else {
+			outputValue = "true"
+		}
 		break
 	case "OL":
 		deviceType = iotc.NodeTypeDimmer
@@ -78,7 +85,8 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	//		node.Id, output.IOType, output.Instance, output.Value(), isyNode.Property.Value)
 	//}
 	// let the adapter decide whether to repeat the same value based on config
-	pub.UpdateOutputValue(nodeID, outputType, iotc.DefaultOutputInstance, isyNode.Property.Value)
+	pub.UpdateOutputValue(nodeID, outputType, iotc.DefaultOutputInstance, outputValue)
+
 }
 
 // UpdateDevices discover ISY Nodes from config and ISY gateway
@@ -102,9 +110,9 @@ func (app *IsyApp) ReadGateway() error {
 	gwNodeID := app.config.GatewayID
 	// gateway := app.GatewayNode()
 
-	app.isyAPI.address, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrAddress)
-	app.isyAPI.login, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrLoginName)
-	app.isyAPI.password, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrPassword)
+	app.isyAPI.address, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrAddress, app.config.GatewayAddress)
+	app.isyAPI.login, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrLoginName, app.config.LoginName)
+	app.isyAPI.password, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrPassword, app.config.Password)
 
 	isyDevice, err := app.isyAPI.ReadIsyGateway()
 

@@ -1,7 +1,7 @@
 publisherId: "isy99"
 
-gatewayAddress: 10.3.3.33
+gatewayAddress: 10.3.3.31
 gatewayId: "gateway"
 
-login: ""
-password: ""
+login: "admin"
+password: "McHarg1"
