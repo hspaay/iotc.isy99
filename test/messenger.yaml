@@ -1,4 +1,4 @@
-# messenger: "DummyMessenger"
+# messenger: "DummyMessenger"    
 # messenger: "MQTTMessenger"
 
 server: "localhost"

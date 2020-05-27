@@ -1,7 +1,10 @@
-publisherId: "isy99"
+# Publisher configuration options
+# Optional parameters are commented out and shown with their default value
+
+#publisherId: "isy99"
 
 gatewayAddress: 10.3.3.31
-gatewayId: "gateway"
+#gatewayId: "gateway"
 
-login: "admin"
-password: "test"
+#login: ""
+#password: ""
