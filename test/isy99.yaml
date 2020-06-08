@@ -1,10 +1,11 @@
 # Publisher configuration options
 # Optional parameters are commented out and shown with their default value
 
-#publisherId: "isy99"
+publisherId: "isy99"
 
-gatewayAddress: 10.3.3.31
-#gatewayId: "gateway"
+#gatewayAddress: 10.3.3.31
+gatewayAddress: "file://../test/gateway-nodes.xml"
+gatewayId: "gateway"
 
 #login: ""
 #password: ""

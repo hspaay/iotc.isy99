@@ -104,15 +104,15 @@ func (app *IsyApp) UpdateDevices() {
 	}
 }
 
-// ReadGateway reads and the isy99 gateway device and its nodes
+// ReadGateway reads the isy99 gateway device and its nodes
 func (app *IsyApp) ReadGateway() error {
 	pub := app.pub
 	gwNodeID := app.config.GatewayID
 	// gateway := app.GatewayNode()
 
-	app.isyAPI.address, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrAddress, app.config.GatewayAddress)
-	app.isyAPI.login, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrLoginName, app.config.LoginName)
-	app.isyAPI.password, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrPassword, app.config.Password)
+	// app.isyAPI.address, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrAddress, app.config.GatewayAddress)
+	// app.isyAPI.login, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrLoginName, app.config.LoginName)
+	// app.isyAPI.password, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrPassword, app.config.Password)
 
 	isyDevice, err := app.isyAPI.ReadIsyGateway()
 
@@ -157,10 +157,5 @@ func (app *IsyApp) Poll(pub *publisher.Publisher) {
 	err := app.ReadGateway()
 	if err == nil {
 		app.UpdateDevices()
-	}
-	// in case configuration changes
-	newPollInterval, err := pub.GetNodeConfigInt(iotc.PublisherNodeID, iotc.NodeAttrPollInterval)
-	if err == nil {
-		app.pub.SetPollInterval(newPollInterval, app.Poll)
 	}
 }

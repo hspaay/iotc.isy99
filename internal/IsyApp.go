@@ -13,7 +13,7 @@ const ConfigDefaultPollIntervalSec = 15 * 60
 // AppID application name used for configuration file and default publisherID
 const appID = "isy99"
 
-const gatewayID = "gateway"
+const defaultGatewayID = "gateway"
 
 // IsyAppConfig with application state, loaded from isy99.yaml
 type IsyAppConfig struct {
@@ -59,12 +59,17 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 	app := IsyApp{
 		config: config,
 		pub:    pub,
-		logger: pub.Logger,
+		logger: pub.Logger(),
 		// gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.Zone, config.PublisherID, GatewayID),
-		isyAPI: &IsyAPI{},
+		isyAPI: NewIsyAPI(config.GatewayAddress, config.LoginName, config.Password),
 	}
-	app.config.PublisherID = appID
-	app.isyAPI.log = pub.Logger
+	if app.config.GatewayID == "" {
+		app.config.GatewayID = defaultGatewayID
+	}
+	if app.config.PublisherID == "" {
+		app.config.PublisherID = appID
+	}
+	app.isyAPI.log = app.logger
 	pub.SetPollInterval(60, app.Poll)
 	pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)
@@ -76,7 +81,7 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
-	appConfig := &IsyAppConfig{PublisherID: appID, GatewayID: gatewayID}
+	appConfig := &IsyAppConfig{PublisherID: appID, GatewayID: defaultGatewayID}
 	isyPub, _ := publisher.NewAppPublisher(appID, "", appConfig, true)
 
 	app := NewIsyApp(appConfig, isyPub)

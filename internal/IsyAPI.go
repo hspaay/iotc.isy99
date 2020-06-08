@@ -14,10 +14,12 @@ import (
 
 // IsyAPI gateway access
 type IsyAPI struct {
-	address  string // ISY IP address
-	login    string // Basic Auth login name
-	password string // Basic Auth password
-	log      *logrus.Logger
+	address       string // ISY IP address
+	login         string // Basic Auth login name
+	password      string // Basic Auth password
+	log           *logrus.Logger
+	useSimulation bool              // use simulation file instead of actual
+	simulation    map[string]string // map used when in sumualtion
 }
 
 // IsyDevice Collection of ISY99x device information from multiple ISY REST calls
@@ -143,6 +145,17 @@ func (isyAPI *IsyAPI) ReadIsyStatus() (*IsyStatus, error) {
 // ReadIsyNodes reads the ISY Node list
 func (isyAPI *IsyAPI) ReadIsyNodes() (*IsyNodes, error) {
 	isyNodes := IsyNodes{}
+
+	if isyAPI.useSimulation {
+		filename := isyAPI.address[7:]
+		buffer, err := ioutil.ReadFile(filename)
+		if err != nil {
+			isyAPI.log.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
+		}
+		err = xml.Unmarshal(buffer, &isyNodes)
+		return &isyNodes, err
+	}
+	// actual request
 	err := isyAPI.isyRequest("/rest/nodes", &isyNodes)
 	if err != nil {
 		return nil, err
@@ -166,7 +179,7 @@ func (isyAPI *IsyAPI) ReadIsyGateway() (isyDevice *IsyDevice, err error) {
 	return isyDevice, err
 }
 
-// WriteOnOff writes a on or off command to an isy node
+// WriteOnOff writes an on or off command to an isy node
 // address is the ISY node address
 // onOff is the new value to write
 func (isyAPI *IsyAPI) WriteOnOff(address string, onOff bool) error {
@@ -174,16 +187,21 @@ func (isyAPI *IsyAPI) WriteOnOff(address string, onOff bool) error {
 	if onOff == false {
 		newValue = "DOF"
 	}
+	if isyAPI.useSimulation {
+		isyAPI.simulation[address] = newValue
+		return nil
+	}
 	restPath := fmt.Sprintf("/rest/nodes/%s/cmd/%s", address, newValue)
 	err := isyAPI.isyRequest(restPath, nil)
 	return err
 }
 
 // isyRequest sends a request to the ISY device
+// isyAPI.address contains the gateway address. IRead from simulation file if 'file://folder' is used
 // restPath contains the REST url path for the request
 func (isyAPI *IsyAPI) isyRequest(restPath string, response interface{}) error {
 	// if address is a file then load content from file. Intended for testing
-	if strings.HasPrefix(isyAPI.address, "file://") {
+	if isyAPI.useSimulation {
 		filename := isyAPI.address[7:]
 		buffer, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -223,4 +241,18 @@ func (isyAPI *IsyAPI) isyRequest(restPath string, response interface{}) error {
 	}
 
 	return nil
+}
+
+// NewIsyAPI create an ISY API proxy
+// gatewayAddress is the ip address of the gateway, or "file://<path>" to a simulation xml file
+// login to gateway device
+// password to gateway device
+func NewIsyAPI(gatewayAddress string, login string, password string) *IsyAPI {
+	isy := &IsyAPI{}
+	isy.address = gatewayAddress
+	isy.login = login
+	isy.password = password
+	isy.useSimulation = strings.HasPrefix(gatewayAddress, "file://")
+	isy.simulation = make(map[string]string)
+	return isy
 }

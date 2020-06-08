@@ -24,6 +24,7 @@ func (app *IsyApp) SetupGatewayNode(pub *publisher.Publisher) {
 	gatewayNode := pub.GetNodeByID(gwID)
 	if gatewayNode == nil {
 		pub.NewNode(gwID, iotc.NodeTypeGateway)
+		gatewayNode = pub.GetNodeByID(gwID)
 	}
 	config := pub.NewNodeConfig(gwID, iotc.NodeAttrAddress, iotc.DataTypeString, "ISY gateway IP address", "")
 	config = nodes.NewNodeConfig(iotc.NodeAttrLoginName, iotc.DataTypeString, "ISY gateway login name", "")

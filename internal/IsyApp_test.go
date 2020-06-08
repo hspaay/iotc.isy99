@@ -14,7 +14,7 @@ const testConfigFolder = "../test"
 const testData = "isy99-testdata.xml"
 const deckLightsID = "15 2D A 1"
 
-var messengerConfig = &messenger.MessengerConfig{Zone: "test"}
+var messengerConfig = &messenger.MessengerConfig{Domain: "test"}
 var appConfig = &IsyAppConfig{}
 
 func TestLoadConfig(t *testing.T) {
@@ -27,25 +27,20 @@ func TestLoadConfig(t *testing.T) {
 // Read ISY device and check if more than 1 node is returned. A minimum of 1 is expected if the device is online with
 // an additional node for each connected node.
 func TestReadIsy(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	_, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
 	assert.NoError(t, err)
 
-	isyAPI := IsyAPI{
-		log:     pub.Logger,
-		address: "file://../test/isy99-config.xml",
-		// login:    appConfig.LoginName,
-		// password: appConfig.Password,
-	}
+	isyAPI := NewIsyAPI(appConfig.GatewayAddress, appConfig.LoginName, appConfig.Password)
 
 	isyDevice, err := isyAPI.ReadIsyGateway()
 	assert.NoError(t, err)
 	assert.True(t, isyDevice.configuration.AppVersion != "", "Expected an application version")
 	//assert.NotEmpty(t, app.config.Node.LocalIP, "Expected Local IP")
 
-	isyAPI.address = "file://../test/isy99-nodes.xml"
+	isyAPI.address = "file://../test/gateway-nodes.xml"
 	isyNodes, err := isyAPI.ReadIsyNodes()
 	if assert.NoError(t, err) {
-		assert.True(t, len(isyNodes.Nodes) > 6, "Expected 6 ISY nodes. Got fewer.")
+		assert.True(t, len(isyNodes.Nodes) > 5, "Expected 5 ISY nodes. Got fewer.")
 	}
 }
 
@@ -61,18 +56,21 @@ func TestPollOnce(t *testing.T) {
 	pub.Stop()
 }
 
-// This requires a working switch
+// This simulates the switch
 func TestSwitch(t *testing.T) {
 	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
 	assert.NoError(t, err)
 
 	app := NewIsyApp(appConfig, pub)
+	app.SetupGatewayNode(pub)
+
+	// FIXME: load isy nodes from file
 
 	pub.Start()
 	assert.NoError(t, err)
 	app.Poll(pub)
 	// some time to publish stuff
-	// time.Sleep(3 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// throw a switch
 	deckSwitch := pub.GetNodeByID(deckLightsID)
