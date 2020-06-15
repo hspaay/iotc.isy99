@@ -33,26 +33,6 @@ type IsyApp struct {
 	isyAPI *IsyAPI // ISY gateway access
 }
 
-// // Start the module.
-// // This starts the publisher and creates the gateway node
-// func (adapter *Isy99App) Start() error {
-// 	interval, _ := adapter.PublisherNode().GetConfigInt(nodes.AttrNamePollInterval)
-// 	err := adapter.MyZoneService.Start(adapter.commandHandler, nil, adapter.Poll, interval)
-// 	adapter.Poll()
-// 	return err
-// }
-
-// // Stop the adapter and its polling
-// //func (adapter *Isy99Adapter) Stop() {
-// //  adapter.MyZoneService.Stop()
-// //}
-
-// // NewIsy99Adapter returns a new instance of Isy99Adapter module
-// func NewIsy99Adapter() *Isy99App {
-// 	adapter := new(Isy99App)
-// 	return adapter
-// }
-
 // NewIsyApp creates the app
 // This creates a node for the gateway
 func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
@@ -82,7 +62,7 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
 	appConfig := &IsyAppConfig{PublisherID: appID, GatewayID: defaultGatewayID}
-	isyPub, _ := publisher.NewAppPublisher(appID, "", appConfig, true)
+	isyPub, _ := publisher.NewAppPublisher(appID, "", "", appConfig, true)
 
 	app := NewIsyApp(appConfig, isyPub)
 	app.SetupGatewayNode(isyPub)

@@ -11,6 +11,7 @@ import (
 )
 
 const testConfigFolder = "../test"
+const testCacheFolder = "../test/cache"
 const testData = "isy99-testdata.xml"
 const deckLightsID = "15 2D A 1"
 
@@ -18,7 +19,7 @@ var messengerConfig = &messenger.MessengerConfig{Domain: "test"}
 var appConfig = &IsyAppConfig{}
 
 func TestLoadConfig(t *testing.T) {
-	_, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	_, err := publisher.NewAppPublisher(appID, testConfigFolder, testCacheFolder, appConfig, false)
 	assert.NoError(t, err)
 	assert.Equal(t, "isy99", appConfig.PublisherID)
 	assert.Equal(t, "gateway", appConfig.GatewayID)
@@ -27,16 +28,17 @@ func TestLoadConfig(t *testing.T) {
 // Read ISY device and check if more than 1 node is returned. A minimum of 1 is expected if the device is online with
 // an additional node for each connected node.
 func TestReadIsy(t *testing.T) {
-	_, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	_, err := publisher.NewAppPublisher(appID, testConfigFolder, testCacheFolder, appConfig, false)
 	assert.NoError(t, err)
 
 	isyAPI := NewIsyAPI(appConfig.GatewayAddress, appConfig.LoginName, appConfig.Password)
-
+	// use a simulation file
+	isyAPI.address = "file://../test/gateway-config.xml"
 	isyDevice, err := isyAPI.ReadIsyGateway()
 	assert.NoError(t, err)
-	assert.True(t, isyDevice.configuration.AppVersion != "", "Expected an application version")
-	//assert.NotEmpty(t, app.config.Node.LocalIP, "Expected Local IP")
+	assert.NotEmptyf(t, isyDevice.configuration.AppVersion, "Expected an application version")
 
+	// use a simulation file
 	isyAPI.address = "file://../test/gateway-nodes.xml"
 	isyNodes, err := isyAPI.ReadIsyNodes()
 	if assert.NoError(t, err) {
@@ -45,7 +47,7 @@ func TestReadIsy(t *testing.T) {
 }
 
 func TestPollOnce(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, testCacheFolder, appConfig, false)
 	assert.NoError(t, err)
 
 	app := NewIsyApp(appConfig, pub)
@@ -58,7 +60,7 @@ func TestPollOnce(t *testing.T) {
 
 // This simulates the switch
 func TestSwitch(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, testCacheFolder, appConfig, false)
 	assert.NoError(t, err)
 
 	app := NewIsyApp(appConfig, pub)
@@ -105,7 +107,7 @@ func TestSwitch(t *testing.T) {
 }
 
 func TestStartStop(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, testCacheFolder, appConfig, false)
 	assert.NoError(t, err)
 
 	// app := NewIsyApp(appConfig, pub)
