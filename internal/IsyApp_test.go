@@ -81,7 +81,8 @@ func TestSwitch(t *testing.T) {
 		// switchInput := deckSwitch.GetInput(iotc.InputTypeSwitch)
 
 		app.logger.Infof("TestSwitch: --- Switching deck switch %s OFF", deckSwitch.Address)
-		pub.PublishSetInput(switchInput.Address, "false")
+		pubKey := pub.GetPublisherKey(switchInput.Address)
+		pub.PublishSetInput(switchInput.Address, "false", pubKey)
 		assert.NoError(t, err)
 		time.Sleep(2 * time.Second)
 		// fetch result
@@ -93,14 +94,14 @@ func TestSwitch(t *testing.T) {
 
 			app.logger.Infof("TestSwitch: --- Switching deck switch %s ON", deckSwitch.Address)
 			if assert.NotNil(t, switchInput) {
-				pub.PublishSetInput(switchInput.Address, "true")
+				pub.PublishSetInput(switchInput.Address, "true", pubKey)
 			}
 			time.Sleep(2 * time.Second)
 			outputValue = pub.OutputValues.GetOutputValueByAddress(switchOutput.Address)
 			assert.Equal(t, "true", outputValue.Value)
 
 			// be nice and turn the light back off
-			pub.PublishSetInput(switchInput.Address, "false")
+			pub.PublishSetInput(switchInput.Address, "false", pubKey)
 		}
 	}
 	pub.Stop()
