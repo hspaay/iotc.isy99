@@ -75,7 +75,7 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		// https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:REST_Interface#Properties
 		pub.NewOutput(nodeID, outputType, iotc.DefaultOutputInstance)
 		if hasInput {
-			pub.NewInput(nodeID, outputType, iotc.DefaultInputInstance)
+			pub.NewInput(nodeID, iotc.InputType(outputType), iotc.DefaultInputInstance)
 		}
 	}
 
@@ -102,54 +102,6 @@ func (app *IsyApp) UpdateDevices() {
 	for _, isyNode := range isyNodes.Nodes {
 		app.updateDevice(isyNode)
 	}
-}
-
-// ReadGateway reads the isy99 gateway device and its nodes
-func (app *IsyApp) ReadGateway() error {
-	pub := app.pub
-	gwNodeID := app.config.GatewayID
-	// gateway := app.GatewayNode()
-
-	// app.isyAPI.address, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrAddress, app.config.GatewayAddress)
-	// app.isyAPI.login, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrLoginName, app.config.LoginName)
-	// app.isyAPI.password, _ = pub.GetNodeConfigValue(gwNodeID, iotc.NodeAttrPassword, app.config.Password)
-
-	isyDevice, err := app.isyAPI.ReadIsyGateway()
-
-	prevStatus, _ := pub.GetNodeStatus(gwNodeID, iotc.NodeStatusRunState)
-	if err != nil {
-		// only report this once
-		if prevStatus != iotc.NodeRunStateError {
-			// gateway went down
-			app.logger.Warningf("IsyApp.ReadGateway: ISY99x gateway is no longer reachable on address %s", app.isyAPI.address)
-			pub.SetNodeStatus(gwNodeID, map[iotc.NodeStatus]string{
-				iotc.NodeStatusRunState:  iotc.NodeRunStateError,
-				iotc.NodeStatusLastError: "Gateway not reachable on address " + app.isyAPI.address,
-			})
-		}
-		return err
-	}
-
-	if prevStatus != iotc.NodeRunStateReady {
-		// gateway came back
-		pub.SetNodeStatus(gwNodeID, map[iotc.NodeStatus]string{
-			iotc.NodeStatusRunState:  iotc.NodeRunStateReady,
-			iotc.NodeStatusLastError: "Connection restored to address " + app.isyAPI.address,
-		})
-		app.logger.Warningf("Isy99Adapter.ReadGateway: Connection restored to ISY99x gateway on address %s", app.isyAPI.address)
-	}
-
-	// Update the info we have on the gateway
-	pub.Nodes.SetNodeAttr(gwNodeID, map[iotc.NodeAttr]string{
-		iotc.NodeAttrName:            isyDevice.configuration.Platform,
-		iotc.NodeAttrSoftwareVersion: isyDevice.configuration.App + " - " + isyDevice.configuration.AppVersion,
-		iotc.NodeAttrModel:           isyDevice.configuration.Product.Description,
-		iotc.NodeAttrManufacturer:    isyDevice.configuration.DeviceSpecs.Make,
-		// iotc.NodeAttrLocalIP:         isyDevice.network.Interface.IP,
-		iotc.NodeAttrLocalIP: app.isyAPI.address,
-		iotc.NodeAttrMAC:     isyDevice.configuration.Root.ID,
-	})
-	return nil
 }
 
 // Poll polls the ISY gateway for updates to nodes and sensors

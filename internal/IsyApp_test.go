@@ -85,8 +85,9 @@ func TestSwitch(t *testing.T) {
 		pub.PublishSetInput(switchInput.Address, "false", pubKey)
 		assert.NoError(t, err)
 		time.Sleep(2 * time.Second)
+
 		// fetch result
-		switchOutput := pub.GetOutputByType(deckLightsID, iotc.InputTypeSwitch, iotc.DefaultInputInstance)
+		switchOutput := pub.GetOutputByType(deckLightsID, iotc.OutputTypeSwitch, iotc.DefaultInputInstance)
 		// switchOutput := deckSwitch.GetOutput(iotc.InputTypeSwitch)
 		if assert.NotNil(t, switchOutput) {
 			outputValue := pub.OutputValues.GetOutputValueByAddress(switchOutput.Address)
