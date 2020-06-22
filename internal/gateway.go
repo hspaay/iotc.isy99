@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/publisher"
 )
@@ -9,8 +12,10 @@ import (
 func (app *IsyApp) ReadGateway() error {
 	pub := app.pub
 	gwNodeID := app.config.GatewayID
-
+	startTime := time.Now()
 	isyDevice, err := app.isyAPI.ReadIsyGateway()
+	endTime := time.Now()
+	latency := endTime.Sub(startTime)
 
 	prevStatus, _ := pub.GetNodeStatus(gwNodeID, iotc.NodeStatusRunState)
 	if err != nil {
@@ -26,14 +31,12 @@ func (app *IsyApp) ReadGateway() error {
 		return err
 	}
 
-	if prevStatus != iotc.NodeRunStateReady {
-		// gateway came back
-		pub.SetNodeStatus(gwNodeID, map[iotc.NodeStatus]string{
-			iotc.NodeStatusRunState:  iotc.NodeRunStateReady,
-			iotc.NodeStatusLastError: "Connection restored to address " + app.isyAPI.address,
-		})
-		app.logger.Warningf("Isy99Adapter.ReadGateway: Connection restored to ISY99x gateway on address %s", app.isyAPI.address)
-	}
+	pub.SetNodeStatus(gwNodeID, map[iotc.NodeStatus]string{
+		iotc.NodeStatusRunState:    iotc.NodeRunStateReady,
+		iotc.NodeStatusLastError:   "Connection restored to address " + app.isyAPI.address,
+		iotc.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
+	})
+	app.logger.Warningf("Isy99Adapter.ReadGateway: Connection restored to ISY99x gateway on address %s", app.isyAPI.address)
 
 	// Update the info we have on the gateway
 	pub.Nodes.SetNodeAttr(gwNodeID, map[iotc.NodeAttr]string{
@@ -60,17 +63,17 @@ func (app *IsyApp) SetupGatewayNode(pub *publisher.Publisher) {
 		gatewayNode = pub.GetNodeByID(gwID)
 	}
 	pub.Nodes.UpdateNodeConfig(gatewayNode.Address, iotc.NodeAttrLocalIP, &iotc.ConfigAttr{
-		Datatype:    iotc.DataTypeString,
+		DataType:    iotc.DataTypeString,
 		Description: "ISY gateway IP address",
 		Secret:      true,
 	})
 	pub.Nodes.UpdateNodeConfig(gatewayNode.Address, iotc.NodeAttrLoginName, &iotc.ConfigAttr{
-		Datatype:    iotc.DataTypeString,
+		DataType:    iotc.DataTypeString,
 		Description: "ISY gateway login name",
 		Secret:      true,
 	})
 	pub.Nodes.UpdateNodeConfig(gatewayNode.Address, iotc.NodeAttrPassword, &iotc.ConfigAttr{
-		Datatype:    iotc.DataTypeString,
+		DataType:    iotc.DataTypeString,
 		Description: "ISY gateway login password",
 		Secret:      true,
 	})

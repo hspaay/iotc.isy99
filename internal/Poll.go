@@ -60,8 +60,11 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	node := pub.GetNodeByID(nodeID)
 	if node == nil {
 		pub.NewNode(nodeID, iotc.NodeType(deviceType))
-		pub.NewNodeConfig(nodeID, iotc.NodeAttrName, iotc.DataTypeString, "Name of ISY node", isyNode.Name)
-		pub.NewNodeConfig(nodeID, iotc.NodeAttrProduct, iotc.DataTypeString, "Device product name", isyNode.Type)
+		pub.UpdateNodeConfig(nodeID, iotc.NodeAttrName, &iotc.ConfigAttr{
+			DataType:    iotc.DataTypeString,
+			Description: "Name of ISY node",
+			Default:     isyNode.Name,
+		})
 		pub.SetNodeStatus(nodeID, map[iotc.NodeStatus]string{
 			iotc.NodeStatusRunState: iotc.NodeRunStateReady,
 		})
