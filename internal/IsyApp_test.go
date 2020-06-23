@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hspaay/iotc.golang/iotc"
-	"github.com/hspaay/iotc.golang/messenger"
-	"github.com/hspaay/iotc.golang/publisher"
+	"github.com/iotdomain/iotdomain-go/messenger"
+	"github.com/iotdomain/iotdomain-go/publisher"
+	"github.com/iotdomain/iotdomain-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,8 +77,8 @@ func TestSwitch(t *testing.T) {
 	// throw a switch
 	deckSwitch := pub.GetNodeByID(deckLightsID)
 	if assert.NotNil(t, deckSwitch) {
-		switchInput := pub.Inputs.GetInput(deckSwitch.Address, iotc.InputTypeSwitch, iotc.DefaultInputInstance)
-		// switchInput := deckSwitch.GetInput(iotc.InputTypeSwitch)
+		switchInput := pub.Inputs.GetInput(deckSwitch.Address, types.InputTypeSwitch, types.DefaultInputInstance)
+		// switchInput := deckSwitch.GetInput(types.InputTypeSwitch)
 
 		app.logger.Infof("TestSwitch: --- Switching deck switch %s OFF", deckSwitch.Address)
 		pubKey := pub.GetPublisherKey(switchInput.Address)
@@ -87,8 +87,8 @@ func TestSwitch(t *testing.T) {
 		time.Sleep(2 * time.Second)
 
 		// fetch result
-		switchOutput := pub.GetOutputByType(deckLightsID, iotc.OutputTypeSwitch, iotc.DefaultInputInstance)
-		// switchOutput := deckSwitch.GetOutput(iotc.InputTypeSwitch)
+		switchOutput := pub.GetOutputByType(deckLightsID, types.OutputTypeSwitch, types.DefaultInputInstance)
+		// switchOutput := deckSwitch.GetOutput(types.InputTypeSwitch)
 		if assert.NotNil(t, switchOutput) {
 			outputValue := pub.OutputValues.GetOutputValueByAddress(switchOutput.Address)
 			assert.Equal(t, "false", outputValue.Value)

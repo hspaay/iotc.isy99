@@ -1,6 +1,6 @@
 package isy99
 
-import "iotc.isy99/internal"
+import "iotd.isy99/internal"
 
 func main() {
 	internal.Run()

@@ -3,7 +3,7 @@
 package internal
 
 import (
-	"github.com/hspaay/iotc.golang/publisher"
+	"github.com/iotdomain/iotdomain-go/publisher"
 	"github.com/sirupsen/logrus"
 )
 

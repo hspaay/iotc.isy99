@@ -15,5 +15,5 @@ See config files in ./test as examples
 
 ## Usage
 
-Configure the publisher as described above and run it as described in the iotc.golang library.
+Configure the publisher as described above and run it as described in the iotdomain-go library.
 This will automatically discover insteon devices on the gateway, publish their discover and their current value. Switches can be controlled with a $set command.

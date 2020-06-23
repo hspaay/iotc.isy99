@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hspaay/iotc.golang/iotc"
-	"github.com/hspaay/iotc.golang/publisher"
+	"github.com/iotdomain/iotdomain-go/publisher"
+	"github.com/iotdomain/iotdomain-go/types"
 )
 
 // IsyURL to contact ISY99x gateway
@@ -34,12 +34,12 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	outputValue := isyNode.Property.Value
 
 	// What node are we dealing with?
-	deviceType := iotc.NodeTypeUnknown
-	outputType := iotc.OutputTypeOnOffSwitch
+	deviceType := types.NodeTypeUnknown
+	outputType := types.OutputTypeOnOffSwitch
 	switch isyNode.Property.ID {
 	case "ST":
-		deviceType = iotc.NodeTypeOnOffSwitch
-		outputType = iotc.OutputTypeOnOffSwitch
+		deviceType = types.NodeTypeOnOffSwitch
+		outputType = types.OutputTypeOnOffSwitch
 		hasInput = true
 		if outputValue == "0" || strings.ToLower(outputValue) == "false" {
 			outputValue = "false"
@@ -48,37 +48,37 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		}
 		break
 	case "OL":
-		deviceType = iotc.NodeTypeDimmer
-		outputType = iotc.OutputTypeDimmer
+		deviceType = types.NodeTypeDimmer
+		outputType = types.OutputTypeDimmer
 		hasInput = true
 		break
 	case "RR":
-		deviceType = iotc.NodeTypeUnknown
+		deviceType = types.NodeTypeUnknown
 		break
 	}
 	// Add new discoveries
 	node := pub.GetNodeByID(nodeID)
 	if node == nil {
-		pub.NewNode(nodeID, iotc.NodeType(deviceType))
-		pub.UpdateNodeConfig(nodeID, iotc.NodeAttrName, &iotc.ConfigAttr{
-			DataType:    iotc.DataTypeString,
+		pub.NewNode(nodeID, types.NodeType(deviceType))
+		pub.UpdateNodeConfig(nodeID, types.NodeAttrName, &types.ConfigAttr{
+			DataType:    types.DataTypeString,
 			Description: "Name of ISY node",
 			Default:     isyNode.Name,
 		})
-		pub.SetNodeStatus(nodeID, map[iotc.NodeStatus]string{
-			iotc.NodeStatusRunState: iotc.NodeRunStateReady,
+		pub.SetNodeStatus(nodeID, map[types.NodeStatus]string{
+			types.NodeStatusRunState: types.NodeRunStateReady,
 		})
 	}
 
-	output := pub.GetOutputByType(nodeID, outputType, iotc.DefaultOutputInstance)
+	output := pub.GetOutputByType(nodeID, outputType, types.DefaultOutputInstance)
 	if output == nil {
 		// Add an output and optionally an input for the node.
 		// Most ISY nodes have only a single sensor. This is a very basic implementation.
 		// Is it worth adding multi-sensor support?
 		// https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:REST_Interface#Properties
-		pub.NewOutput(nodeID, outputType, iotc.DefaultOutputInstance)
+		pub.NewOutput(nodeID, outputType, types.DefaultOutputInstance)
 		if hasInput {
-			pub.NewInput(nodeID, iotc.InputType(outputType), iotc.DefaultInputInstance)
+			pub.NewInput(nodeID, types.InputType(outputType), types.DefaultInputInstance)
 		}
 	}
 
@@ -88,7 +88,7 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	//		node.Id, output.IOType, output.Instance, output.Value(), isyNode.Property.Value)
 	//}
 	// let the adapter decide whether to repeat the same value based on config
-	pub.UpdateOutputValue(nodeID, outputType, iotc.DefaultOutputInstance, outputValue)
+	pub.UpdateOutputValue(nodeID, outputType, types.DefaultOutputInstance, outputValue)
 
 }
 
