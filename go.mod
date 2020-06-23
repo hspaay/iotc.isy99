@@ -1,4 +1,4 @@
-module iotd.isy99
+module isy99
 
 go 1.13
 
