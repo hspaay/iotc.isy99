@@ -4,7 +4,6 @@ package internal
 
 import (
 	"github.com/iotdomain/iotdomain-go/publisher"
-	"github.com/sirupsen/logrus"
 )
 
 // ConfigDefaultPollIntervalSec for polling the gateway
@@ -29,7 +28,6 @@ type IsyAppConfig struct {
 type IsyApp struct {
 	config *IsyAppConfig
 	pub    *publisher.Publisher
-	logger *logrus.Logger
 	isyAPI *IsyAPI // ISY gateway access
 }
 
@@ -39,7 +37,6 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 	app := IsyApp{
 		config: config,
 		pub:    pub,
-		logger: pub.Logger(),
 		// gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.Zone, config.PublisherID, GatewayID),
 		isyAPI: NewIsyAPI(config.GatewayAddress, config.LoginName, config.Password),
 	}
@@ -49,7 +46,6 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 	if app.config.PublisherID == "" {
 		app.config.PublisherID = appID
 	}
-	app.isyAPI.log = app.logger
 	pub.SetPollInterval(60, app.Poll)
 	pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)

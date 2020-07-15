@@ -4,10 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotdomain/iotdomain-go/messenger"
+	"github.com/iotdomain/iotdomain-go/messaging"
 	"github.com/iotdomain/iotdomain-go/publisher"
 	"github.com/iotdomain/iotdomain-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testConfigFolder = "../test"
@@ -15,7 +17,7 @@ const testCacheFolder = "../test/cache"
 const testData = "isy99-testdata.xml"
 const deckLightsID = "15 2D A 1"
 
-var messengerConfig = &messenger.MessengerConfig{Domain: "test"}
+var messengerConfig = &messaging.MessengerConfig{Domain: "test"}
 var appConfig = &IsyAppConfig{}
 
 func TestLoadConfig(t *testing.T) {
@@ -67,44 +69,45 @@ func TestSwitch(t *testing.T) {
 	app.SetupGatewayNode(pub)
 
 	// FIXME: load isy nodes from file
-
 	pub.Start()
 	assert.NoError(t, err)
 	app.Poll(pub)
 	// some time to publish stuff
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	// throw a switch
 	deckSwitch := pub.GetNodeByID(deckLightsID)
-	if assert.NotNil(t, deckSwitch) {
-		switchInput := pub.Inputs.GetInput(deckSwitch.Address, types.InputTypeSwitch, types.DefaultInputInstance)
-		// switchInput := deckSwitch.GetInput(types.InputTypeSwitch)
+	require.NotNilf(t, deckSwitch, "Switch %s not found", deckLightsID)
 
-		app.logger.Infof("TestSwitch: --- Switching deck switch %s OFF", deckSwitch.Address)
-		pubKey := pub.GetPublisherKey(switchInput.Address)
-		pub.PublishSetInput(switchInput.Address, "false", pubKey)
-		assert.NoError(t, err)
-		time.Sleep(2 * time.Second)
+	switchInput := pub.GetInput(deckSwitch.NodeID, types.InputTypeSwitch, types.DefaultInputInstance)
+	require.NotNil(t, switchInput, "Input of switch node not found on address %s", deckSwitch.Address)
+	// switchInput := deckSwitch.GetInput(types.InputTypeSwitch)
 
-		// fetch result
-		switchOutput := pub.GetOutputByType(deckLightsID, types.OutputTypeSwitch, types.DefaultInputInstance)
-		// switchOutput := deckSwitch.GetOutput(types.InputTypeSwitch)
-		if assert.NotNil(t, switchOutput) {
-			outputValue := pub.OutputValues.GetOutputValueByAddress(switchOutput.Address)
-			assert.Equal(t, "false", outputValue.Value)
+	logrus.Infof("TestSwitch: --- Switching deck switch %s OFF", deckSwitch.Address)
 
-			app.logger.Infof("TestSwitch: --- Switching deck switch %s ON", deckSwitch.Address)
-			if assert.NotNil(t, switchInput) {
-				pub.PublishSetInput(switchInput.Address, "true", pubKey)
-			}
-			time.Sleep(2 * time.Second)
-			outputValue = pub.OutputValues.GetOutputValueByAddress(switchOutput.Address)
-			assert.Equal(t, "true", outputValue.Value)
+	pub.PublishSetInput(switchInput.Address, "false")
+	assert.NoError(t, err)
+	time.Sleep(2 * time.Second)
 
-			// be nice and turn the light back off
-			pub.PublishSetInput(switchInput.Address, "false", pubKey)
-		}
-	}
+	// fetch result
+	switchOutput := pub.GetOutput(deckLightsID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	// switchOutput := deckSwitch.GetOutput(types.InputTypeSwitch)
+	require.NotNilf(t, switchOutput, "Output switch of node %s not found", deckLightsID)
+
+	outputValue := pub.GetOutputValue(switchOutput.NodeID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	assert.Equal(t, "false", outputValue.Value)
+
+	logrus.Infof("TestSwitch: --- Switching deck switch %s ON", deckSwitch.Address)
+	require.NotNil(t, switchInput, "Input switch of node %s not found", deckSwitch.NodeID)
+	pub.PublishSetInput(switchInput.Address, "true")
+
+	time.Sleep(3 * time.Second)
+	outputValue = pub.GetOutputValue(switchOutput.NodeID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	assert.Equal(t, "true", outputValue.Value)
+
+	// be nice and turn the light back off
+	pub.PublishSetInput(switchInput.Address, "false")
+
 	pub.Stop()
 }
 
@@ -115,6 +118,6 @@ func TestStartStop(t *testing.T) {
 	// app := NewIsyApp(appConfig, pub)
 
 	pub.Start()
-	time.Sleep(time.Second * 100)
+	time.Sleep(time.Second * 10)
 	pub.Stop()
 }

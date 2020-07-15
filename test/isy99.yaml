@@ -3,6 +3,7 @@
 
 publisherId: "isy99"
 
+# if the gateway is a file then run in simulation mode
 #gatewayAddress: 10.3.3.31
 gatewayAddress: "file://../test/gateway-nodes.xml"
 gatewayId: "gateway"

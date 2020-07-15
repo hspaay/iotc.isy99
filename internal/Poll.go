@@ -7,6 +7,7 @@ import (
 
 	"github.com/iotdomain/iotdomain-go/publisher"
 	"github.com/iotdomain/iotdomain-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 // IsyURL to contact ISY99x gateway
@@ -32,6 +33,10 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	pub := app.pub
 	hasInput := false
 	outputValue := isyNode.Property.Value
+	if app.isyAPI.useSimulation {
+		// take values from simulation
+		outputValue = app.isyAPI.simulation[isyNode.Address]
+	}
 
 	// What node are we dealing with?
 	deviceType := types.NodeTypeUnknown
@@ -41,7 +46,7 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		deviceType = types.NodeTypeOnOffSwitch
 		outputType = types.OutputTypeOnOffSwitch
 		hasInput = true
-		if outputValue == "0" || strings.ToLower(outputValue) == "false" {
+		if outputValue == "" || outputValue == "DOF" || outputValue == "0" || strings.ToLower(outputValue) == "false" {
 			outputValue = "false"
 		} else {
 			outputValue = "true"
@@ -65,12 +70,12 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 			Description: "Name of ISY node",
 			Default:     isyNode.Name,
 		})
-		pub.SetNodeStatus(nodeID, map[types.NodeStatus]string{
+		pub.UpdateNodeStatus(nodeID, map[types.NodeStatus]string{
 			types.NodeStatusRunState: types.NodeRunStateReady,
 		})
 	}
 
-	output := pub.GetOutputByType(nodeID, outputType, types.DefaultOutputInstance)
+	output := pub.GetOutput(nodeID, outputType, types.DefaultOutputInstance)
 	if output == nil {
 		// Add an output and optionally an input for the node.
 		// Most ISY nodes have only a single sensor. This is a very basic implementation.
@@ -98,7 +103,7 @@ func (app *IsyApp) UpdateDevices() {
 	isyNodes, err := app.isyAPI.ReadIsyNodes()
 	if err != nil {
 		// Unexpected. What to do now?
-		app.logger.Warningf("DiscoverNodes: Error reading nodes: %s", err)
+		logrus.Warningf("DiscoverNodes: Error reading nodes: %s", err)
 		return
 	}
 	// Update new or changed ISY nodes

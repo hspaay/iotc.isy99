@@ -14,10 +14,9 @@ import (
 
 // IsyAPI gateway access
 type IsyAPI struct {
-	address       string // ISY IP address
-	login         string // Basic Auth login name
-	password      string // Basic Auth password
-	log           *logrus.Logger
+	address       string            // ISY IP address
+	login         string            // Basic Auth login name
+	password      string            // Basic Auth password
 	useSimulation bool              // use simulation file instead of actual
 	simulation    map[string]string // map used when in sumualtion
 }
@@ -150,7 +149,7 @@ func (isyAPI *IsyAPI) ReadIsyNodes() (*IsyNodes, error) {
 		filename := isyAPI.address[7:]
 		buffer, err := ioutil.ReadFile(filename)
 		if err != nil {
-			isyAPI.log.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
+			logrus.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
 		}
 		err = xml.Unmarshal(buffer, &isyNodes)
 		return &isyNodes, err
@@ -180,18 +179,18 @@ func (isyAPI *IsyAPI) ReadIsyGateway() (isyDevice *IsyDevice, err error) {
 }
 
 // WriteOnOff writes an on or off command to an isy node
-// address is the ISY node address
+// deviceID is the ISY node ID
 // onOff is the new value to write
-func (isyAPI *IsyAPI) WriteOnOff(address string, onOff bool) error {
+func (isyAPI *IsyAPI) WriteOnOff(deviceID string, onOff bool) error {
 	newValue := "DON"
 	if onOff == false {
 		newValue = "DOF"
 	}
 	if isyAPI.useSimulation {
-		isyAPI.simulation[address] = newValue
+		isyAPI.simulation[deviceID] = newValue
 		return nil
 	}
-	restPath := fmt.Sprintf("/rest/nodes/%s/cmd/%s", address, newValue)
+	restPath := fmt.Sprintf("/rest/nodes/%s/cmd/%s", deviceID, newValue)
 	err := isyAPI.isyRequest(restPath, nil)
 	return err
 }
@@ -205,7 +204,7 @@ func (isyAPI *IsyAPI) isyRequest(restPath string, response interface{}) error {
 		filename := isyAPI.address[7:]
 		buffer, err := ioutil.ReadFile(filename)
 		if err != nil {
-			isyAPI.log.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
+			logrus.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
 			return err
 		}
 		err = xml.Unmarshal(buffer, &response)
@@ -224,11 +223,11 @@ func (isyAPI *IsyAPI) isyRequest(restPath string, response interface{}) error {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		isyAPI.log.Warnf("pollDevice: Unable to read ISY device from %s: %v", isyURL, err)
+		logrus.Warnf("pollDevice: Unable to read ISY device from %s: %v", isyURL, err)
 		return err
 	} else if resp.StatusCode != 200 {
 		msg := fmt.Sprintf("pollDevice: Error code return by ISY device %s: %v", isyURL, resp.Status)
-		isyAPI.log.Warn(msg)
+		logrus.Warn(msg)
 		err = errors.New(msg)
 		return err
 	}
