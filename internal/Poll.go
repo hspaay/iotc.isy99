@@ -2,7 +2,6 @@
 package internal
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/iotdomain/iotdomain-go/publisher"
@@ -16,25 +15,25 @@ const IsyURL = "http://%s/rest/nodes"
 // readIsyNodesValues reads the ISY Node values
 // This will run http get on http://address/rest/nodes
 // address is the ISY hostname or ip address.
-// returns a node object and possible error
-func (app *IsyApp) readIsyNodesValues(address string) (*IsyNodes, error) {
-	isyURL := fmt.Sprintf(IsyURL, address)
-	isyNodes := IsyNodes{}
-	err := app.isyAPI.isyRequest(isyURL, &isyNodes)
-	if err != nil {
-		return nil, err
-	}
-	return &isyNodes, nil
-}
+// returns an ISY XML node object and possible error
+// func (app *IsyApp) readIsyNodesValues(address string) (*IsyNodes, error) {
+// 	isyURL := fmt.Sprintf(IsyURL, address)
+// 	isyNodes := IsyNodes{}
+// 	err := app.isyAPI.isyRequest(isyURL, &isyNodes)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &isyNodes, nil
+// }
 
 // updateDevice updates the node discovery and output value from the provided isy node
 func (app *IsyApp) updateDevice(isyNode *IsyNode) {
-	nodeID := isyNode.Address
+	deviceID := isyNode.Address
 	pub := app.pub
 	hasInput := false
 	outputValue := isyNode.Property.Value
-	if app.isyAPI.useSimulation {
-		// take values from simulation
+	// take value from simulation as the given node is a static file
+	if strings.HasPrefix(app.config.GatewayAddress, "file://") {
 		outputValue = app.isyAPI.simulation[isyNode.Address]
 	}
 
@@ -62,28 +61,29 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		break
 	}
 	// Add new discoveries
-	node := pub.GetNodeByID(nodeID)
+	node := pub.GetNodeByDeviceID(deviceID)
 	if node == nil {
-		pub.NewNode(nodeID, types.NodeType(deviceType))
-		pub.UpdateNodeConfig(nodeID, types.NodeAttrName, &types.ConfigAttr{
+		pub.CreateNode(deviceID, types.NodeType(deviceType))
+		pub.UpdateNodeConfig(deviceID, types.NodeAttrName, &types.ConfigAttr{
 			DataType:    types.DataTypeString,
 			Description: "Name of ISY node",
 			Default:     isyNode.Name,
 		})
-		pub.UpdateNodeStatus(nodeID, map[types.NodeStatus]string{
+		pub.UpdateNodeStatus(deviceID, map[types.NodeStatus]string{
 			types.NodeStatusRunState: types.NodeRunStateReady,
 		})
 	}
 
-	output := pub.GetOutput(nodeID, outputType, types.DefaultOutputInstance)
+	output := pub.GetOutput(deviceID, outputType, types.DefaultOutputInstance)
 	if output == nil {
 		// Add an output and optionally an input for the node.
 		// Most ISY nodes have only a single sensor. This is a very basic implementation.
 		// Is it worth adding multi-sensor support?
 		// https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:REST_Interface#Properties
-		pub.NewOutput(nodeID, outputType, types.DefaultOutputInstance)
+		pub.CreateOutput(deviceID, outputType, types.DefaultOutputInstance)
 		if hasInput {
-			pub.NewInput(nodeID, types.InputType(outputType), types.DefaultInputInstance)
+			pub.CreateInput(deviceID, types.InputType(outputType),
+				types.DefaultInputInstance, app.HandleInputCommand)
 		}
 	}
 
@@ -93,7 +93,7 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	//		node.Id, output.IOType, output.Instance, output.Value(), isyNode.Property.Value)
 	//}
 	// let the adapter decide whether to repeat the same value based on config
-	pub.UpdateOutputValue(nodeID, outputType, types.DefaultOutputInstance, outputValue)
+	pub.UpdateOutputValue(deviceID, outputType, types.DefaultOutputInstance, outputValue)
 
 }
 
@@ -114,7 +114,7 @@ func (app *IsyApp) UpdateDevices() {
 
 // Poll polls the ISY gateway for updates to nodes and sensors
 func (app *IsyApp) Poll(pub *publisher.Publisher) {
-	err := app.ReadGateway()
+	_, err := app.ReadGateway()
 	if err == nil {
 		app.UpdateDevices()
 	}

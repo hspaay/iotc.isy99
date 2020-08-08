@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -14,11 +15,10 @@ import (
 
 // IsyAPI gateway access
 type IsyAPI struct {
-	address       string            // ISY IP address
-	login         string            // Basic Auth login name
-	password      string            // Basic Auth password
-	useSimulation bool              // use simulation file instead of actual
-	simulation    map[string]string // map used when in sumualtion
+	address    string            // ISY IP address or file:// for simulation
+	login      string            // Basic Auth login name
+	password   string            // Basic Auth password
+	simulation map[string]string // map used when in simulation
 }
 
 // IsyDevice Collection of ISY99x device information from multiple ISY REST calls
@@ -50,7 +50,7 @@ type IsyAPI struct {
 //    ...
 // </configuration>
 type IsyDevice struct {
-	configuration struct {
+	Configuration struct {
 		DeviceSpecs struct {
 			Make  string `xml:"make"`
 			Model string `xml:"model"`
@@ -66,7 +66,7 @@ type IsyDevice struct {
 			ID          string `xml:"id"`
 			Description string `xml:"desc"`
 		} `xml:"product"`
-	}
+	} `xml:"configuration"`
 	// network struct {
 	// 	Interface struct {
 	// 		DHCP    string `xml:"isDHCP,attr"`
@@ -135,46 +135,22 @@ type IsyProp struct {
 func (isyAPI *IsyAPI) ReadIsyStatus() (*IsyStatus, error) {
 	isyStatus := IsyStatus{}
 	err := isyAPI.isyRequest("/rest/status", &isyStatus)
-	if err != nil {
-		return nil, err
-	}
-	return &isyStatus, nil
+	return &isyStatus, err
 }
 
 // ReadIsyNodes reads the ISY Node list
 func (isyAPI *IsyAPI) ReadIsyNodes() (*IsyNodes, error) {
 	isyNodes := IsyNodes{}
 
-	if isyAPI.useSimulation {
-		filename := isyAPI.address[7:]
-		buffer, err := ioutil.ReadFile(filename)
-		if err != nil {
-			logrus.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
-		}
-		err = xml.Unmarshal(buffer, &isyNodes)
-		return &isyNodes, err
-	}
-	// actual request
 	err := isyAPI.isyRequest("/rest/nodes", &isyNodes)
-	if err != nil {
-		return nil, err
-	}
-	return &isyNodes, nil
+	return &isyNodes, err
 }
 
 // ReadIsyGateway reads ISY gateway configuration and status
 // returns isyDevice with device information
 func (isyAPI *IsyAPI) ReadIsyGateway() (isyDevice *IsyDevice, err error) {
 	isyDevice = &IsyDevice{}
-	err = isyAPI.isyRequest("/rest/config", &isyDevice.configuration)
-
-	if err != nil {
-		return isyDevice, err
-	}
-	// err = isyAPI.isyRequest("/rest/network", &isyDevice.network)
-	// if err != nil {
-	// 	return isyDevice, err
-	// }
+	err = isyAPI.isyRequest("/rest/config", &isyDevice.Configuration)
 	return isyDevice, err
 }
 
@@ -182,26 +158,29 @@ func (isyAPI *IsyAPI) ReadIsyGateway() (isyDevice *IsyDevice, err error) {
 // deviceID is the ISY node ID
 // onOff is the new value to write
 func (isyAPI *IsyAPI) WriteOnOff(deviceID string, onOff bool) error {
+	var err error
 	newValue := "DON"
 	if onOff == false {
 		newValue = "DOF"
 	}
-	if isyAPI.useSimulation {
-		isyAPI.simulation[deviceID] = newValue
-		return nil
+	// default to last set value
+	isyAPI.simulation[deviceID] = newValue
+	// can't request this in simulation mode
+	if !strings.HasPrefix(isyAPI.address, "file://") {
+		restPath := fmt.Sprintf("/rest/nodes/%s/cmd/%s", deviceID, newValue)
+		err = isyAPI.isyRequest(restPath, nil)
 	}
-	restPath := fmt.Sprintf("/rest/nodes/%s/cmd/%s", deviceID, newValue)
-	err := isyAPI.isyRequest(restPath, nil)
 	return err
 }
 
 // isyRequest sends a request to the ISY device
-// isyAPI.address contains the gateway address. IRead from simulation file if 'file://folder' is used
+// address contains the gateway address. If it starts with file:// then read from
+// (simulation) file named <address>/<restPath>.xml
 // restPath contains the REST url path for the request
 func (isyAPI *IsyAPI) isyRequest(restPath string, response interface{}) error {
 	// if address is a file then load content from file. Intended for testing
-	if isyAPI.useSimulation {
-		filename := isyAPI.address[7:]
+	if strings.HasPrefix(isyAPI.address, "file://") {
+		filename := path.Join(isyAPI.address[7:], restPath+".xml")
 		buffer, err := ioutil.ReadFile(filename)
 		if err != nil {
 			logrus.Errorf("isyRequest: Unable to read ISY data from file from %s: %v", filename, err)
@@ -251,7 +230,6 @@ func NewIsyAPI(gatewayAddress string, login string, password string) *IsyAPI {
 	isy.address = gatewayAddress
 	isy.login = login
 	isy.password = password
-	isy.useSimulation = strings.HasPrefix(gatewayAddress, "file://")
 	isy.simulation = make(map[string]string)
 	return isy
 }

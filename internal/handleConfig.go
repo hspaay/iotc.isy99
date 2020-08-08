@@ -9,6 +9,6 @@ import (
 // HandleConfigCommand for handling node configuration changes
 // Not supported
 func (app *IsyApp) HandleConfigCommand(address string, config types.NodeAttrMap) types.NodeAttrMap {
-	logrus.Infof("IsyApp.HandleConfigCommand for %s. Ignored as this isn't supported", address)
-	return nil
+	logrus.Infof("IsyApp.HandleConfigCommand for %s. Nothing to do here.", address)
+	return config
 }

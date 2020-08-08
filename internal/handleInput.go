@@ -31,7 +31,7 @@ func (app *IsyApp) SwitchOnOff(input *types.InputDiscoveryMessage, onOffString s
 		newValue = false
 	}
 	prevValue := "n/a"
-	prevOutputValue := pub.GetOutputValue(input.NodeID, types.OutputType(input.InputType), input.Instance)
+	prevOutputValue := pub.GetOutputValue(input.DeviceID, types.OutputType(input.InputType), input.Instance)
 	if prevOutputValue != nil {
 		prevValue = prevOutputValue.Value
 	}
@@ -49,19 +49,19 @@ func (app *IsyApp) SwitchOnOff(input *types.InputDiscoveryMessage, onOffString s
 
 // HandleInputCommand for handling input commands
 // Currently very basic. Only switches are supported.
-func (app *IsyApp) HandleInputCommand(inputAddress string, s *types.SetInputMessage) {
-	logrus.Infof("IsyApp.InputHandler. Input for '%s'", inputAddress)
+func (app *IsyApp) HandleInputCommand(
+	input *types.InputDiscoveryMessage, sender string, value string) {
+	logrus.Infof("IsyApp.HandleInputCommand. Input for '%s'", input.Address)
 
 	// payloadStr := string(payload[:])
-	input := app.pub.GetInputByAddress(inputAddress)
 
 	// for now only support on/off
 	switch input.InputType {
 	case types.InputTypeSwitch:
 		//adapter.UpdateOutputValue()device.UpdateSensorCommand(sensor, payloadStr)
-		_ = app.SwitchOnOff(input, s.Value)
+		_ = app.SwitchOnOff(input, value)
 	default:
-		logrus.Warningf("IsyApp.InputHandler. Input '%s' is Not a switch", inputAddress)
+		logrus.Warningf("IsyApp.HandleInputCommand. Input '%s' is Not a switch", input.Address)
 	}
 	// publish the result. give gateway time to update.
 	// TODO: get push notification instead

@@ -3,7 +3,12 @@
 package internal
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/iotdomain/iotdomain-go/publisher"
+	"github.com/iotdomain/iotdomain-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 // ConfigDefaultPollIntervalSec for polling the gateway
@@ -31,6 +36,79 @@ type IsyApp struct {
 	isyAPI *IsyAPI // ISY gateway access
 }
 
+// ReadGateway reads the isy99 gateway device and its nodes
+// This returns the ID of the gateway node that was read
+func (app *IsyApp) ReadGateway() (gwNodeID string, err error) {
+	pub := app.pub
+	gwNodeID = app.config.GatewayID
+	startTime := time.Now()
+	isyDevice, err := app.isyAPI.ReadIsyGateway()
+	endTime := time.Now()
+	latency := endTime.Sub(startTime)
+
+	prevStatus, _ := pub.GetNodeStatus(gwNodeID, types.NodeStatusRunState)
+	if err != nil {
+		// only report this once
+		if prevStatus != types.NodeRunStateError {
+			// gateway went down
+			logrus.Warningf("IsyApp.ReadGateway: ISY99x gateway is no longer reachable on address %s", app.isyAPI.address)
+			pub.UpdateNodeStatus(gwNodeID, map[types.NodeStatus]string{
+				types.NodeStatusRunState:  types.NodeRunStateError,
+				types.NodeStatusLastError: "Gateway not reachable on address " + app.isyAPI.address,
+			})
+		}
+		return gwNodeID, err
+	}
+
+	pub.UpdateNodeStatus(gwNodeID, map[types.NodeStatus]string{
+		types.NodeStatusRunState:    types.NodeRunStateReady,
+		types.NodeStatusLastError:   "Connection restored to address " + app.isyAPI.address,
+		types.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
+	})
+	logrus.Warningf("Isy99Adapter.ReadGateway: Connection restored to ISY99x gateway on address %s", app.isyAPI.address)
+
+	// Update the info we have on the gateway
+	pub.UpdateNodeAttr(gwNodeID, map[types.NodeAttr]string{
+		types.NodeAttrName:            isyDevice.Configuration.Platform,
+		types.NodeAttrSoftwareVersion: isyDevice.Configuration.App + " - " + isyDevice.Configuration.AppVersion,
+		types.NodeAttrModel:           isyDevice.Configuration.Product.Description,
+		types.NodeAttrManufacturer:    isyDevice.Configuration.DeviceSpecs.Make,
+		// types.NodeAttrLocalIP:         isyDevice.network.Interface.IP,
+		types.NodeAttrLocalIP: app.isyAPI.address,
+		types.NodeAttrMAC:     isyDevice.Configuration.Root.ID,
+	})
+	return gwNodeID, nil
+}
+
+// SetupGatewayNode creates the gateway node if it doesn't exist
+// This set the default gateway address in its configuration
+func (app *IsyApp) SetupGatewayNode(pub *publisher.Publisher) {
+	gwID := app.config.GatewayID
+	logrus.Infof("SetupGatewayNode. ID=%s", gwID)
+
+	gatewayNode := pub.GetNodeByDeviceID(gwID)
+	if gatewayNode == nil {
+		pub.CreateNode(gwID, types.NodeTypeGateway)
+		gatewayNode = pub.GetNodeByDeviceID(gwID)
+	}
+	pub.UpdateNodeConfig(gatewayNode.Address, types.NodeAttrLocalIP, &types.ConfigAttr{
+		DataType:    types.DataTypeString,
+		Description: "ISY gateway IP address",
+		Secret:      true,
+	})
+	pub.UpdateNodeConfig(gatewayNode.Address, types.NodeAttrLoginName, &types.ConfigAttr{
+		DataType:    types.DataTypeString,
+		Description: "ISY gateway login name",
+		Secret:      true,
+	})
+	pub.UpdateNodeConfig(gatewayNode.Address, types.NodeAttrPassword, &types.ConfigAttr{
+		DataType:    types.DataTypeString,
+		Description: "ISY gateway login password",
+		Secret:      true,
+	})
+
+}
+
 // NewIsyApp creates the app
 // This creates a node for the gateway
 func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
@@ -47,10 +125,10 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 		app.config.PublisherID = appID
 	}
 	pub.SetPollInterval(60, app.Poll)
-	pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)
 	// // Discover the node(s) and outputs. Use default for republishing discovery
 	// isyPub.SetDiscoveryInterval(0, app.Discover)
+	app.SetupGatewayNode(pub)
 
 	return &app
 }
@@ -58,10 +136,9 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
 	appConfig := &IsyAppConfig{PublisherID: appID, GatewayID: defaultGatewayID}
-	isyPub, _ := publisher.NewAppPublisher(appID, "", "", appConfig, true)
+	isyPub, _ := publisher.NewAppPublisher(appID, "", appConfig, true)
 
-	app := NewIsyApp(appConfig, isyPub)
-	app.SetupGatewayNode(isyPub)
+	_ = NewIsyApp(appConfig, isyPub)
 
 	isyPub.Start()
 	isyPub.WaitForSignal()
