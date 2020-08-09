@@ -166,11 +166,11 @@ func TestSwitch(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// fetch result
-	switchOutput := pub.GetOutput(deckLightsID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	switchOutput := pub.GetOutputByDevice(deckLightsID, types.OutputTypeSwitch, types.DefaultOutputInstance)
 	// switchOutput := deckSwitch.GetOutput(types.InputTypeSwitch)
 	require.NotNilf(t, switchOutput, "Output switch of node %s not found", deckLightsID)
 
-	outputValue := pub.GetOutputValue(switchOutput.DeviceID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	outputValue := pub.GetOutputValueByDevice(switchOutput.DeviceID, types.OutputTypeSwitch, types.DefaultOutputInstance)
 	assert.Equal(t, "false", outputValue.Value)
 
 	logrus.Infof("TestSwitch: --- Switching deck switch %s ON", deckSwitch.Address)
@@ -178,7 +178,7 @@ func TestSwitch(t *testing.T) {
 	pub.PublishSetInput(switchInput.Address, "true")
 
 	time.Sleep(3 * time.Second)
-	outputValue = pub.GetOutputValue(switchOutput.DeviceID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	outputValue = pub.GetOutputValueByDevice(switchOutput.DeviceID, types.OutputTypeSwitch, types.DefaultOutputInstance)
 	assert.Equal(t, "true", outputValue.Value)
 
 	// be nice and turn the light back off

@@ -74,7 +74,7 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		})
 	}
 
-	output := pub.GetOutput(deviceID, outputType, types.DefaultOutputInstance)
+	output := pub.GetOutputByDevice(deviceID, outputType, types.DefaultOutputInstance)
 	if output == nil {
 		// Add an output and optionally an input for the node.
 		// Most ISY nodes have only a single sensor. This is a very basic implementation.

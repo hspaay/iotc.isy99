@@ -31,7 +31,7 @@ func (app *IsyApp) SwitchOnOff(input *types.InputDiscoveryMessage, onOffString s
 		newValue = false
 	}
 	prevValue := "n/a"
-	prevOutputValue := pub.GetOutputValue(input.DeviceID, types.OutputType(input.InputType), input.Instance)
+	prevOutputValue := pub.GetOutputValueByDevice(input.DeviceID, types.OutputType(input.InputType), input.Instance)
 	if prevOutputValue != nil {
 		prevValue = prevOutputValue.Value
 	}
