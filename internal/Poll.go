@@ -28,7 +28,7 @@ const IsyURL = "http://%s/rest/nodes"
 
 // updateDevice updates the node discovery and output value from the provided isy node
 func (app *IsyApp) updateDevice(isyNode *IsyNode) {
-	deviceID := isyNode.Address
+	nodeHWID := isyNode.Address
 	pub := app.pub
 	hasInput := false
 	outputValue := isyNode.Property.Value
@@ -61,28 +61,28 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 		break
 	}
 	// Add new discoveries
-	node := pub.GetNodeByDeviceID(deviceID)
+	node := pub.GetNodeByHWID(nodeHWID)
 	if node == nil {
-		pub.CreateNode(deviceID, types.NodeType(deviceType))
-		pub.UpdateNodeConfig(deviceID, types.NodeAttrName, &types.ConfigAttr{
+		pub.CreateNode(nodeHWID, types.NodeType(deviceType))
+		pub.UpdateNodeConfig(nodeHWID, types.NodeAttrName, &types.ConfigAttr{
 			DataType:    types.DataTypeString,
 			Description: "Name of ISY node",
 			Default:     isyNode.Name,
 		})
-		pub.UpdateNodeStatus(deviceID, map[types.NodeStatus]string{
-			types.NodeStatusRunState: types.NodeRunStateReady,
+		pub.UpdateNodeStatus(nodeHWID, map[types.NodeStatusAttr]string{
+			types.NodeStatusAttrState: types.NodeStateReady,
 		})
 	}
 
-	output := pub.GetOutputByDevice(deviceID, outputType, types.DefaultOutputInstance)
+	output := pub.GetOutputByNodeHWID(nodeHWID, outputType, types.DefaultOutputInstance)
 	if output == nil {
 		// Add an output and optionally an input for the node.
 		// Most ISY nodes have only a single sensor. This is a very basic implementation.
 		// Is it worth adding multi-sensor support?
 		// https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:REST_Interface#Properties
-		pub.CreateOutput(deviceID, outputType, types.DefaultOutputInstance)
+		pub.CreateOutput(nodeHWID, outputType, types.DefaultOutputInstance)
 		if hasInput {
-			pub.CreateInput(deviceID, types.InputType(outputType),
+			pub.CreateInput(nodeHWID, types.InputType(outputType),
 				types.DefaultInputInstance, app.HandleInputCommand)
 		}
 	}
@@ -93,7 +93,7 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 	//		node.Id, output.IOType, output.Instance, output.Value(), isyNode.Property.Value)
 	//}
 	// let the adapter decide whether to repeat the same value based on config
-	pub.UpdateOutputValue(deviceID, outputType, types.DefaultOutputInstance, outputValue)
+	pub.UpdateOutputValue(nodeHWID, outputType, types.DefaultOutputInstance, outputValue)
 
 }
 

@@ -1,7 +1,6 @@
 package internal_test
 
 import (
-	"isy99/internal"
 	"os"
 	"testing"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/iotdomain/iotdomain-go/nodes"
 	"github.com/iotdomain/iotdomain-go/publisher"
 	"github.com/iotdomain/iotdomain-go/types"
+	"github.com/iotdomain/isy99/internal"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,10 +152,10 @@ func TestSwitch(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// throw a switch
-	deckSwitch := pub.GetNodeByDeviceID(deckLightsID)
+	deckSwitch := pub.GetNodeByHWID(deckLightsID)
 	require.NotNilf(t, deckSwitch, "Switch %s not found", deckLightsID)
 
-	switchInput := pub.GetInputByDevice(deckSwitch.DeviceID, types.InputTypeSwitch, types.DefaultInputInstance)
+	switchInput := pub.GetInputByNodeHWID(deckSwitch.HWID, types.InputTypeSwitch, types.DefaultInputInstance)
 	require.NotNil(t, switchInput, "Input of switch node not found on address %s", deckSwitch.Address)
 	// switchInput := deckSwitch.GetInput(types.InputTypeSwitch)
 
@@ -166,11 +166,11 @@ func TestSwitch(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// fetch result
-	switchOutput := pub.GetOutputByDevice(deckLightsID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	switchOutput := pub.GetOutputByNodeHWID(deckLightsID, types.OutputTypeSwitch, types.DefaultOutputInstance)
 	// switchOutput := deckSwitch.GetOutput(types.InputTypeSwitch)
 	require.NotNilf(t, switchOutput, "Output switch of node %s not found", deckLightsID)
 
-	outputValue := pub.GetOutputValueByDevice(switchOutput.DeviceID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	outputValue := pub.GetOutputValueByNodeHWID(switchOutput.NodeHWID, types.OutputTypeSwitch, types.DefaultOutputInstance)
 	assert.Equal(t, "false", outputValue.Value)
 
 	logrus.Infof("TestSwitch: --- Switching deck switch %s ON", deckSwitch.Address)
@@ -178,7 +178,7 @@ func TestSwitch(t *testing.T) {
 	pub.PublishSetInput(switchInput.Address, "true")
 
 	time.Sleep(3 * time.Second)
-	outputValue = pub.GetOutputValueByDevice(switchOutput.DeviceID, types.OutputTypeSwitch, types.DefaultOutputInstance)
+	outputValue = pub.GetOutputValueByNodeHWID(switchOutput.NodeHWID, types.OutputTypeSwitch, types.DefaultOutputInstance)
 	assert.Equal(t, "true", outputValue.Value)
 
 	// be nice and turn the light back off

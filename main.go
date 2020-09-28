@@ -1,6 +1,6 @@
 package isy99
 
-import "isy99/internal"
+import "./internal"
 
 func main() {
 	internal.Run()

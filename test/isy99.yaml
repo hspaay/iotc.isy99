@@ -6,7 +6,6 @@
 # if the gateway is a file then run in simulation mode
 #gatewayAddress: 10.3.3.31
 gatewayAddress: "file://../test"
-#gatewayId: "gateway"
 
 #login: ""
 #password: ""

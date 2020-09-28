@@ -9,19 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// // HandleConfig updates for nodes
-// func (adapter *Isy99Adapter) HandleConfig(
-// 	device *nodes.Node, inOutput *nodes.NodeInOutput, changes map[string]string, isEncrypted bool) {
-
-// 	for attrName, configValue := range changes {
-// 		if inOutput != nil {
-// 			inOutput.UpdateConfig(attrName, configValue, false)
-// 		} else {
-// 			device.UpdateConfig(attrName, configValue, false)
-// 		}
-// 	}
-// }
-
 // SwitchOnOff turns lights or switch on or off. A payload '0', 'off' or 'false' turns off, otherwise it turns on
 func (app *IsyApp) SwitchOnOff(input *types.InputDiscoveryMessage, onOffString string) error {
 	pub := app.pub
@@ -31,7 +18,7 @@ func (app *IsyApp) SwitchOnOff(input *types.InputDiscoveryMessage, onOffString s
 		newValue = false
 	}
 	prevValue := "n/a"
-	prevOutputValue := pub.GetOutputValueByDevice(input.DeviceID, types.OutputType(input.InputType), input.Instance)
+	prevOutputValue := pub.GetOutputValueByNodeHWID(input.NodeHWID, types.OutputType(input.InputType), input.Instance)
 	if prevOutputValue != nil {
 		prevValue = prevOutputValue.Value
 	}
@@ -40,7 +27,7 @@ func (app *IsyApp) SwitchOnOff(input *types.InputDiscoveryMessage, onOffString s
 
 	// input.UpdateValue(onOffString)
 	node := pub.GetNodeByAddress(input.Address)
-	err := app.isyAPI.WriteOnOff(node.DeviceID, newValue)
+	err := app.isyAPI.WriteOnOff(node.HWID, newValue)
 	if err != nil {
 		logrus.Errorf("IsyApp.SwitchOnOff: Input %s: error writing ISY: %v", input.Address, err)
 	}
