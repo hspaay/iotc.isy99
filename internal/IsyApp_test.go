@@ -33,7 +33,7 @@ var messengerConfig = &messaging.MessengerConfig{Domain: "test"}
 // an additional node for each connected node.
 func TestReadIsyGateway(t *testing.T) {
 	os.Remove(nodesFile)
-	_, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	_, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, "", false)
 	assert.NoError(t, err)
 
 	isyAPI := internal.NewIsyAPI(appConfig.GatewayAddress, appConfig.LoginName, appConfig.Password)
@@ -84,7 +84,7 @@ func TestReadWriteIsyDevice(t *testing.T) {
 
 func TestIsyAppGateway(t *testing.T) {
 	os.Remove(nodesFile)
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, "", false)
 	assert.NoError(t, err)
 
 	// appconfig, read from test/isy99.yaml, contains simulated gateway file
@@ -108,7 +108,7 @@ func TestIsyAppGateway(t *testing.T) {
 
 func TestIsyAppConfig(t *testing.T) {
 	os.Remove(nodesFile)
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, "", false)
 	assert.NoError(t, err)
 	app := internal.NewIsyApp(appConfig, pub)
 	pub.Start()
@@ -124,7 +124,7 @@ func TestIsyAppConfig(t *testing.T) {
 
 func TestIsyAppPoll(t *testing.T) {
 	os.Remove(nodesFile)
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, "", false)
 	assert.NoError(t, err)
 
 	app := internal.NewIsyApp(appConfig, pub)
@@ -138,7 +138,7 @@ func TestIsyAppPoll(t *testing.T) {
 // This simulates the switch
 func TestSwitch(t *testing.T) {
 	os.Remove(nodesFile)
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, "", false)
 	assert.NoError(t, err)
 
 	app := internal.NewIsyApp(appConfig, pub)
@@ -189,7 +189,7 @@ func TestSwitch(t *testing.T) {
 }
 
 func TestStartStop(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(appID, testConfigFolder, appConfig, "", false)
 	assert.NoError(t, err)
 
 	// app := NewIsyApp(appConfig, pub)

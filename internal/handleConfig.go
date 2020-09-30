@@ -8,7 +8,8 @@ import (
 
 // HandleConfigCommand for handling node configuration changes
 // Not supported
-func (app *IsyApp) HandleConfigCommand(address string, config types.NodeAttrMap) types.NodeAttrMap {
-	logrus.Infof("IsyApp.HandleConfigCommand for %s. Nothing to do here.", address)
-	return config
+func (app *IsyApp) HandleConfigCommand(nodeHWID string, config types.NodeAttrMap) {
+	logrus.Infof("IsyApp.HandleConfigCommand for node HWID '%s'", nodeHWID)
+	// at this moment no ISY configuration is changed so just pass it on
+	app.pub.UpdateNodeConfigValues(nodeHWID, config)
 }

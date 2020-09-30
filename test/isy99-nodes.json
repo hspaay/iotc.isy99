@@ -1,44 +1,5 @@
 [
   {
-    "address": "test/isy99/15 2E 52 1/$node",
-    "attr": {
-      "type": "onOffSwitch"
-    },
-    "config": {
-      "name": {
-        "datatype": "string",
-        "default": "Front door lights",
-        "description": "Name of ISY node"
-      },
-      "publishEvent": {
-        "datatype": "string",
-        "default": "false",
-        "description": "Enable publishing outputs as event"
-      },
-      "publishHistory": {
-        "datatype": "boolean",
-        "default": "true",
-        "description": "Enable publishing output history"
-      },
-      "publishLatest": {
-        "datatype": "boolean",
-        "default": "true",
-        "description": "Enable publishing latest output"
-      },
-      "publishRaw": {
-        "datatype": "boolean",
-        "default": "true",
-        "description": "Enable publishing raw outputs"
-      }
-    },
-    "hwID": "15 2E 52 1",
-    "nodeId": "15 2E 52 1",
-    "status": {
-      "state": "ready"
-    },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
-  },
-  {
     "address": "test/isy99/15 2E 57 1/$node",
     "attr": {
       "type": "onOffSwitch"
@@ -73,9 +34,9 @@
     "hwID": "15 2E 57 1",
     "nodeId": "15 2E 57 1",
     "status": {
-      "state": "ready"
+      "runState": "ready"
     },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
+    "timestamp": "2020-09-30T10:32:30.728-0700"
   },
   {
     "address": "test/isy99/15 2E 5B 1/$node",
@@ -112,9 +73,9 @@
     "hwID": "15 2E 5B 1",
     "nodeId": "15 2E 5B 1",
     "status": {
-      "state": "ready"
+      "runState": "ready"
     },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
+    "timestamp": "2020-09-30T10:32:30.728-0700"
   },
   {
     "address": "test/isy99/gateway/$node",
@@ -158,9 +119,9 @@
     "status": {
       "lastError": "Connection restored to address file://../test",
       "latencymsec": "1",
-      "state": "ready"
+      "runState": "ready"
     },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
+    "timestamp": "2020-09-30T10:32:30.728-0700"
   },
   {
     "address": "test/isy99/13 55 D3 1/$node",
@@ -197,9 +158,9 @@
     "hwID": "13 55 D3 1",
     "nodeId": "13 55 D3 1",
     "status": {
-      "state": "ready"
+      "runState": "ready"
     },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
+    "timestamp": "2020-09-30T10:32:30.728-0700"
   },
   {
     "address": "test/isy99/13 57 73 1/$node",
@@ -236,9 +197,9 @@
     "hwID": "13 57 73 1",
     "nodeId": "13 57 73 1",
     "status": {
-      "state": "ready"
+      "runState": "ready"
     },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
+    "timestamp": "2020-09-30T10:32:30.728-0700"
   },
   {
     "address": "test/isy99/15 2D A 1/$node",
@@ -275,8 +236,47 @@
     "hwID": "15 2D A 1",
     "nodeId": "15 2D A 1",
     "status": {
-      "state": "ready"
+      "runState": "ready"
     },
-    "timestamp": "2020-09-27T22:25:07.577-0700"
+    "timestamp": "2020-09-30T10:32:30.728-0700"
+  },
+  {
+    "address": "test/isy99/15 2E 52 1/$node",
+    "attr": {
+      "type": "onOffSwitch"
+    },
+    "config": {
+      "name": {
+        "datatype": "string",
+        "default": "Front door lights",
+        "description": "Name of ISY node"
+      },
+      "publishEvent": {
+        "datatype": "string",
+        "default": "false",
+        "description": "Enable publishing outputs as event"
+      },
+      "publishHistory": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing output history"
+      },
+      "publishLatest": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing latest output"
+      },
+      "publishRaw": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing raw outputs"
+      }
+    },
+    "hwID": "15 2E 52 1",
+    "nodeId": "15 2E 52 1",
+    "status": {
+      "runState": "ready"
+    },
+    "timestamp": "2020-09-30T10:32:30.728-0700"
   }
 ]

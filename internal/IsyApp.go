@@ -43,24 +43,24 @@ func (app *IsyApp) ReadGateway() (gwHWID string, err error) {
 	endTime := time.Now()
 	latency := endTime.Sub(startTime)
 
-	prevStatus, _ := pub.GetNodeStatus(gwHWID, types.NodeStatusAttrState)
+	prevStatus, _ := pub.GetNodeStatus(gwHWID, types.NodeStatusRunState)
 	if err != nil {
 		// only report this once
-		if prevStatus != types.NodeStateError {
+		if prevStatus != types.NodeRunStateError {
 			// gateway went down
 			logrus.Warningf("IsyApp.ReadGateway: ISY99x gateway is no longer reachable on address %s", app.isyAPI.address)
-			pub.UpdateNodeStatus(gwHWID, map[types.NodeStatusAttr]string{
-				types.NodeStatusAttrState:     types.NodeStateError,
-				types.NodeStatusAttrLastError: "Gateway not reachable on address " + app.isyAPI.address,
+			pub.UpdateNodeStatus(gwHWID, map[types.NodeStatus]string{
+				types.NodeStatusRunState:  types.NodeRunStateError,
+				types.NodeStatusLastError: "Gateway not reachable on address " + app.isyAPI.address,
 			})
 		}
 		return gwHWID, err
 	}
 
-	pub.UpdateNodeStatus(gwHWID, map[types.NodeStatusAttr]string{
-		types.NodeStatusAttrState:       types.NodeStateReady,
-		types.NodeStatusAttrLastError:   "Connection restored to address " + app.isyAPI.address,
-		types.NodeStatusAttrLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
+	pub.UpdateNodeStatus(gwHWID, map[types.NodeStatus]string{
+		types.NodeStatusRunState:    types.NodeRunStateReady,
+		types.NodeStatusLastError:   "Connection restored to address " + app.isyAPI.address,
+		types.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
 	})
 	logrus.Warningf("Isy99Adapter.ReadGateway: Connection restored to ISY99x gateway on address %s", app.isyAPI.address)
 
@@ -130,7 +130,7 @@ func NewIsyApp(config *IsyAppConfig, pub *publisher.Publisher) *IsyApp {
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
 	appConfig := &IsyAppConfig{PublisherID: appID}
-	isyPub, _ := publisher.NewAppPublisher(appID, "", appConfig, true)
+	isyPub, _ := publisher.NewAppPublisher(appID, "", appConfig, "", true)
 
 	_ = NewIsyApp(appConfig, isyPub)
 

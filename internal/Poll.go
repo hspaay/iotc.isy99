@@ -69,8 +69,8 @@ func (app *IsyApp) updateDevice(isyNode *IsyNode) {
 			Description: "Name of ISY node",
 			Default:     isyNode.Name,
 		})
-		pub.UpdateNodeStatus(nodeHWID, map[types.NodeStatusAttr]string{
-			types.NodeStatusAttrState: types.NodeStateReady,
+		pub.UpdateNodeStatus(nodeHWID, map[types.NodeStatus]string{
+			types.NodeStatusRunState: types.NodeRunStateReady,
 		})
 	}
 
